@@ -198,7 +198,7 @@ python3 visualize_results.py
 ## File Structure
 
 ```
-llama-cpp-demo/
+llama-quantization-experiment/
 ├── README.md                      # This report
 ├── quantization_experiment.py     # Main experiment script
 ├── visualize_results.py           # Analysis and visualization
