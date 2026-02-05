@@ -29,7 +29,7 @@ When quantizing large language models, a common approach is to apply uniform qua
 
 ### Experiment Workflow
 
-![Experiment Workflow](results/experiment_workflow.png)
+![Experiment Workflow](results/cover-2.png)
 
 The experiment follows a systematic pipeline: starting with the base FP16 model, we apply 10 different quantization strategies using llama.cpp's `--tensor-type` flag for layer-wise precision control, then evaluate each configuration using perplexity on WikiText-2.
 
@@ -55,18 +55,20 @@ We tested 10 quantization strategies, all using Q4_0 as the base quantization wi
 
 ### Summary Table
 
+All quantized configurations use **Q4_0 as base** with selected layers/components kept at **Q8_0** for higher precision. More Q8 layers → larger size (Q8 ≈ 8 bits/weight vs Q4 ≈ 4 bits/weight):
+
 | Configuration | Size (MB) | Perplexity | PPL Δ | Compression |
 |--------------|-----------|------------|-------|-------------|
 | FP16 Baseline | 948 | 12.90 | - | 1.0x |
-| **First 8 layers Q8** | **492** | **13.07** | **+1.3%** | **1.9x** |
-| First 4 layers Q8 | 464 | 13.23 | +2.5% | 2.0x |
-| First+Last 4 layers Q8 | 464 | 13.23 | +2.5% | 2.0x |
-| Alternating Q8 | 435 | 13.24 | +2.6% | 2.2x |
-| FFN Q8 | 485 | 13.31 | +3.1% | 2.0x |
-| Last 8 layers Q8 | 393 | 13.67 | +5.9% | 2.4x |
-| Middle 8 layers Q8 | 393 | 13.80 | +7.0% | 2.4x |
-| Attention Q8 | 357 | 13.82 | +7.1% | 2.7x |
-| Last 4 layers Q8 | 364 | 13.93 | +8.0% | 2.6x |
+| **Q4_0 + first 8 layers Q8** | **492** | **13.07** | **+1.3%** | **1.9x** |
+| Q4_0 + first 4 layers Q8 | 464 | 13.23 | +2.5% | 2.0x |
+| Q4_0 + first+last 4 layers Q8 | 464 | 13.23 | +2.5% | 2.0x |
+| Q4_0 + alternating layers Q8 | 435 | 13.24 | +2.6% | 2.2x |
+| Q4_0 + FFN Q8 | 485 | 13.31 | +3.1% | 2.0x |
+| Q4_0 + last 8 layers Q8 | 393 | 13.67 | +5.9% | 2.4x |
+| Q4_0 + middle 8 layers Q8 | 393 | 13.80 | +7.0% | 2.4x |
+| Q4_0 + attention Q8 | 357 | 13.82 | +7.1% | 2.7x |
+| Q4_0 + last 4 layers Q8 | 364 | 13.93 | +8.0% | 2.6x |
 | Uniform Q4_0 | 336 | 14.16 | +9.8% | 2.8x |
 
 ### Visualization
@@ -81,19 +83,20 @@ This figure shows the tradeoff between model size (compression) and perplexity (
 
 ```
 Perplexity by Configuration (lower is better)
+Base: Q4_0, selected layers at Q8_0
 ─────────────────────────────────────────────────────────────────
 
-FP16 Baseline         |█ 12.90
-First 8 layers Q8     |██████ 13.07        ← Best quantized
-First 4 layers Q8     |████████████ 13.23
-First+Last 4 Q8       |████████████ 13.23
-Alternating Q8        |█████████████ 13.24
-FFN Q8                |███████████████ 13.31
-Last 8 layers Q8      |██████████████████████████████ 13.67
-Middle 8 layers Q8    |███████████████████████████████████ 13.80
-Attention Q8          |███████████████████████████████████ 13.82
-Last 4 layers Q8      |████████████████████████████████████████ 13.93
-Uniform Q4_0          |█████████████████████████████████████████████████ 14.16
+FP16 Baseline              |█ 12.90
+Q4_0 + first 8 layers Q8   |██████ 13.07        ← Best quantized
+Q4_0 + first 4 layers Q8   |████████████ 13.23
+Q4_0 + first+last 4 Q8     |████████████ 13.23
+Q4_0 + alternating Q8      |█████████████ 13.24
+Q4_0 + FFN Q8              |███████████████ 13.31
+Q4_0 + last 8 layers Q8    |██████████████████████████████ 13.67
+Q4_0 + middle 8 layers Q8  |███████████████████████████████████ 13.80
+Q4_0 + attention Q8        |███████████████████████████████████ 13.82
+Q4_0 + last 4 layers Q8    |████████████████████████████████████████ 13.93
+Uniform Q4_0               |█████████████████████████████████████████████████ 14.16
 ```
 
 ## Key Findings
@@ -210,7 +213,7 @@ llama-cpp-demo/
     ├── quantization_results.json  # Raw experiment data
     ├── wikitext-test.txt          # Evaluation dataset
     ├── model_size_perplexity_tradeoff.png  # Size vs PPL plot
-    └── experiment_workflow.png    # Workflow diagram
+    └── cover-2.png                # Workflow diagram
 ```
 
 ## Limitations
@@ -219,20 +222,7 @@ llama-cpp-demo/
 2. **Single metric**: Perplexity on WikiText-2; task-specific performance may vary
 3. **Limited scale**: Small model (0.5B); larger models may show different layer sensitivity patterns
 4. **Q4 vs Q8 only**: Did not test intermediate precisions (Q5, Q6)
-
-## Future Work
-
-- Test on larger models (7B, 13B, 70B)
-- Evaluate on downstream tasks (MMLU, HellaSwag)
-- Explore gradient-based importance scoring for layer selection
-- Compare with importance matrix (imatrix) based quantization
-- Test Q5_K_M and Q6_K as base quantization
-
-## Conclusion
-
-This experiment demonstrates that **layer placement matters significantly for quantization quality**. For the Qwen2-0.5B model, prioritizing early layers for higher precision yields better results than protecting late layers, middle layers, or using uniform quantization. The optimal strategy (`first_8_layers_q8`) achieves 1.9x compression with only 1.3% perplexity degradation.
-
-**Key takeaway**: When you have a fixed budget of layers to keep at high precision, invest that budget in the early layers first.
+the early layers first.
 
 ## References
 
