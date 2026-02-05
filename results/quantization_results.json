@@ -1,0 +1,88 @@
+[
+  {
+    "name": "baseline_fp16",
+    "size_mb": 948.0990600585938,
+    "perplexity": 12.9014,
+    "strategy": "No quantization"
+  },
+  {
+    "name": "uniform_q4_0",
+    "size_mb": 335.83831787109375,
+    "perplexity": 14.1632,
+    "quant_time": 1.5706110000610352,
+    "ppl_time": 2.679471731185913,
+    "strategy": "All layers Q4_0"
+  },
+  {
+    "name": "first_4_layers_q8",
+    "size_mb": 463.80706787109375,
+    "perplexity": 13.2297,
+    "quant_time": 1.5588359832763672,
+    "ppl_time": 2.1143457889556885,
+    "strategy": "First 4 layers Q8, rest Q4"
+  },
+  {
+    "name": "first_8_layers_q8",
+    "size_mb": 492.24456787109375,
+    "perplexity": 13.0733,
+    "quant_time": 1.4238388538360596,
+    "ppl_time": 2.108920097351074,
+    "strategy": "First 8 layers Q8, rest Q4"
+  },
+  {
+    "name": "last_4_layers_q8",
+    "size_mb": 364.27581787109375,
+    "perplexity": 13.9346,
+    "quant_time": 1.2866899967193604,
+    "ppl_time": 2.1007001399993896,
+    "strategy": "Last 4 layers Q8, rest Q4"
+  },
+  {
+    "name": "last_8_layers_q8",
+    "size_mb": 392.71331787109375,
+    "perplexity": 13.6666,
+    "quant_time": 1.2653071880340576,
+    "ppl_time": 2.110522985458374,
+    "strategy": "Last 8 layers Q8, rest Q4"
+  },
+  {
+    "name": "middle_8_layers_q8",
+    "size_mb": 392.71331787109375,
+    "perplexity": 13.7995,
+    "quant_time": 1.3392457962036133,
+    "ppl_time": 2.0953807830810547,
+    "strategy": "Middle 8 layers (L8-15) Q8, rest Q4"
+  },
+  {
+    "name": "first_last_4_layers_q8",
+    "size_mb": 463.80706787109375,
+    "perplexity": 13.2297,
+    "quant_time": 1.4187841415405273,
+    "ppl_time": 2.128396987915039,
+    "strategy": "First 4 + Last 4 layers Q8, middle Q4"
+  },
+  {
+    "name": "alternating_even_q8",
+    "size_mb": 435.36956787109375,
+    "perplexity": 13.2387,
+    "quant_time": 1.340376853942871,
+    "ppl_time": 2.6186559200286865,
+    "strategy": "Even layers Q8, odd layers Q4"
+  },
+  {
+    "name": "attention_q8",
+    "size_mb": 356.83831787109375,
+    "perplexity": 13.8167,
+    "quant_time": 1.485766887664795,
+    "ppl_time": 2.095026969909668,
+    "strategy": "All attention weights Q8, FFN Q4"
+  },
+  {
+    "name": "ffn_q8",
+    "size_mb": 485.46331787109375,
+    "perplexity": 13.3055,
+    "quant_time": 1.7632193565368652,
+    "ppl_time": 2.1072771549224854,
+    "strategy": "All FFN weights Q8, attention Q4"
+  }
+]
