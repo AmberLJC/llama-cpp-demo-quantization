@@ -27,6 +27,14 @@ When quantizing large language models, a common approach is to apply uniform qua
 
 ## Methodology
 
+### Experiment Workflow
+
+![Experiment Workflow](results/experiment_workflow.png)
+
+The experiment follows a systematic pipeline: starting with the base FP16 model, we apply 10 different quantization strategies using llama.cpp's `--tensor-type` flag for layer-wise precision control, then evaluate each configuration using perplexity on WikiText-2.
+
+### Quantization Strategies
+
 We tested 10 quantization strategies, all using Q4_0 as the base quantization with selected layers kept at Q8_0:
 
 | Strategy | Description | Layers at Q8 |
@@ -62,6 +70,14 @@ We tested 10 quantization strategies, all using Q4_0 as the base quantization wi
 | Uniform Q4_0 | 336 | 14.16 | +9.8% | 2.8x |
 
 ### Visualization
+
+#### Model Size vs Perplexity Tradeoff
+
+![Model Size vs Perplexity Tradeoff](results/model_size_perplexity_tradeoff.png)
+
+This figure shows the tradeoff between model size (compression) and perplexity (quality). The optimal region highlights the `first_8_layers_q8` strategy, which achieves excellent compression with minimal quality loss.
+
+#### Perplexity by Configuration
 
 ```
 Perplexity by Configuration (lower is better)
@@ -186,12 +202,15 @@ llama-cpp-demo/
 ├── README.md                      # This report
 ├── quantization_experiment.py     # Main experiment script
 ├── visualize_results.py           # Analysis and visualization
+├── plot_figures.py                # Generate visualization figures
 ├── run_quantization_experiment.sh # Shell script alternative
 ├── models/
 │   └── qwen2-0.5b-instruct-fp16.gguf
 └── results/
     ├── quantization_results.json  # Raw experiment data
-    └── wikitext-test.txt          # Evaluation dataset
+    ├── wikitext-test.txt          # Evaluation dataset
+    ├── model_size_perplexity_tradeoff.png  # Size vs PPL plot
+    └── experiment_workflow.png    # Workflow diagram
 ```
 
 ## Limitations
