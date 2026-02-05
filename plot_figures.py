@@ -7,6 +7,24 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 import numpy as np
 
+# Set modern style
+plt.style.use('seaborn-v0_8-whitegrid')
+plt.rcParams.update({
+    'font.family': 'sans-serif',
+    'font.sans-serif': ['Helvetica Neue', 'Arial', 'DejaVu Sans'],
+    'font.size': 13,
+    'axes.titlesize': 16,
+    'axes.labelsize': 14,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    'legend.fontsize': 11,
+    'figure.facecolor': 'white',
+    'axes.facecolor': '#fafafa',
+    'axes.edgecolor': '#cccccc',
+    'grid.color': '#e0e0e0',
+    'grid.linewidth': 0.8,
+})
+
 # Load results
 with open('results/quantization_results.json', 'r') as f:
     results = json.load(f)
@@ -31,113 +49,154 @@ display_names = {
     'ffn_q8': 'FFN Q8'
 }
 
-# Color mapping based on strategy type
+# Modern color palette (colorblind-friendly)
 colors = {
-    'baseline_fp16': '#2ecc71',       # Green - baseline
-    'uniform_q4_0': '#e74c3c',        # Red - worst
-    'first_4_layers_q8': '#3498db',   # Blue - early layers
-    'first_8_layers_q8': '#1a5276',   # Dark blue - best
-    'last_4_layers_q8': '#f39c12',    # Orange - late layers
-    'last_8_layers_q8': '#e67e22',    # Dark orange
-    'middle_8_layers_q8': '#9b59b6',  # Purple - middle
-    'first_last_4_layers_q8': '#16a085', # Teal - mixed
-    'alternating_even_q8': '#8e44ad', # Dark purple
-    'attention_q8': '#c0392b',        # Dark red - component
-    'ffn_q8': '#27ae60'               # Dark green - component
+    'baseline_fp16': '#10b981',       # Emerald - baseline
+    'uniform_q4_0': '#ef4444',        # Red - uniform/worst
+    'first_4_layers_q8': '#60a5fa',   # Light blue - early layers
+    'first_8_layers_q8': '#2563eb',   # Blue - best (early)
+    'last_4_layers_q8': '#fbbf24',    # Amber - late layers
+    'last_8_layers_q8': '#f59e0b',    # Orange - late layers
+    'middle_8_layers_q8': '#a78bfa',  # Purple - middle
+    'first_last_4_layers_q8': '#34d399', # Teal - mixed
+    'alternating_even_q8': '#8b5cf6', # Violet - alternating
+    'attention_q8': '#f87171',        # Light red - component
+    'ffn_q8': '#4ade80'               # Light green - component
 }
 
 # =============================================================================
 # Figure 1: Model Size vs Perplexity Tradeoff
 # =============================================================================
-fig1, ax1 = plt.subplots(figsize=(12, 8))
+fig1, ax1 = plt.subplots(figsize=(12, 7.5))
 
-# Plot each point
-for i, (name, size, ppl) in enumerate(zip(names, sizes, perplexities)):
-    color = colors.get(name, '#7f8c8d')
-    marker = 'o' if name != 'baseline_fp16' else 's'
-    markersize = 150 if name == 'first_8_layers_q8' else 100
+# Annotation config with connecting lines
+annotation_config = {
+    'baseline_fp16': {'offset': (-70, 25), 'ha': 'right'},
+    'first_8_layers_q8': {'offset': (-15, -40), 'ha': 'center'},
+    'first_4_layers_q8': {'offset': (-70, 18), 'ha': 'right'},
+    'first_last_4_layers_q8': {'offset': (18, -28), 'ha': 'left'},
+    'ffn_q8': {'offset': (18, 18), 'ha': 'left'},
+    'alternating_even_q8': {'offset': (-70, -12), 'ha': 'right'},
+    'uniform_q4_0': {'offset': (15, 8), 'ha': 'left'},
+    'last_4_layers_q8': {'offset': (18, 15), 'ha': 'left'},
+    'attention_q8': {'offset': (18, -15), 'ha': 'left'},
+    'middle_8_layers_q8': {'offset': (15, 8), 'ha': 'left'},
+    'last_8_layers_q8': {'offset': (15, -12), 'ha': 'left'},
+}
+
+# Plot each point with modern styling
+for name, size, ppl in zip(names, sizes, perplexities):
+    color = colors.get(name, '#6b7280')
+    is_best = name == 'first_8_layers_q8'
+    is_baseline = name == 'baseline_fp16'
+
+    marker = 's' if is_baseline else 'o'
+    markersize = 220 if is_best else 140
+    edge_width = 3 if is_best else 2
 
     ax1.scatter(size, ppl, c=color, s=markersize, marker=marker,
-                edgecolors='white', linewidths=2, zorder=5)
+                edgecolors='white', linewidths=edge_width, zorder=5,
+                alpha=0.95)
 
-    # Add labels with offsets to avoid overlap
-    offset_x, offset_y = 10, 0
-    if name == 'baseline_fp16':
-        offset_x, offset_y = -80, -0.15
-    elif name == 'first_8_layers_q8':
-        offset_x, offset_y = 10, -0.12
-    elif name == 'first_4_layers_q8':
-        offset_x, offset_y = 10, 0.05
-    elif name == 'first_last_4_layers_q8':
-        offset_x, offset_y = 10, -0.08
-    elif name == 'ffn_q8':
-        offset_x, offset_y = -60, 0.08
-    elif name == 'alternating_even_q8':
-        offset_x, offset_y = 10, 0.05
-    elif name == 'uniform_q4_0':
-        offset_x, offset_y = 10, 0.05
-    elif name == 'last_4_layers_q8':
-        offset_x, offset_y = -80, 0.05
-    elif name == 'attention_q8':
-        offset_x, offset_y = 10, -0.05
-    elif name == 'middle_8_layers_q8':
-        offset_x, offset_y = 10, 0.05
-    elif name == 'last_8_layers_q8':
-        offset_x, offset_y = 10, -0.05
+    # Styled annotations with connecting lines
+    cfg = annotation_config.get(name, {'offset': (15, 0), 'ha': 'left'})
+    fontweight = 'bold' if is_best else 'medium'
+    fontsize = 12 if is_best else 11
 
-    ax1.annotate(display_names.get(name, name), (size, ppl),
-                 xytext=(offset_x, offset_y), textcoords='offset points',
-                 fontsize=9, fontweight='bold' if name == 'first_8_layers_q8' else 'normal')
+    ax1.annotate(
+        display_names.get(name, name),
+        (size, ppl),
+        xytext=cfg['offset'],
+        textcoords='offset points',
+        fontsize=fontsize,
+        fontweight=fontweight,
+        ha=cfg['ha'],
+        color='#1f2937',
+        arrowprops=dict(
+            arrowstyle='-',
+            color='#9ca3af',
+            lw=0.8,
+            shrinkA=5,
+            shrinkB=5
+        ) if abs(cfg['offset'][0]) > 30 or abs(cfg['offset'][1]) > 25 else None
+    )
 
-# Highlight the Pareto frontier (approximate)
+# Pareto frontier with smooth curve
 pareto_points = ['baseline_fp16', 'first_8_layers_q8', 'first_4_layers_q8',
                  'alternating_even_q8', 'uniform_q4_0']
 pareto_sizes = [sizes[names.index(p)] for p in pareto_points]
 pareto_ppls = [perplexities[names.index(p)] for p in pareto_points]
-# Sort by size
 sorted_pareto = sorted(zip(pareto_sizes, pareto_ppls))
 pareto_sizes_sorted, pareto_ppls_sorted = zip(*sorted_pareto)
-ax1.plot(pareto_sizes_sorted, pareto_ppls_sorted, '--', color='#95a5a6',
-         linewidth=2, alpha=0.7, label='Pareto frontier', zorder=1)
+ax1.plot(pareto_sizes_sorted, pareto_ppls_sorted, '--', color='#9ca3af',
+         linewidth=2, alpha=0.6, zorder=1)
 
-# Add optimal region highlight
-rect = plt.Rectangle((450, 12.9), 100, 0.3, linewidth=2, edgecolor='#1a5276',
-                      facecolor='#1a5276', alpha=0.1, linestyle='--')
-ax1.add_patch(rect)
-ax1.annotate('Optimal\nRegion', xy=(500, 13.05), ha='center', fontsize=10,
-             color='#1a5276', fontweight='bold')
+# Optimal region highlight with gradient effect
+from matplotlib.patches import FancyBboxPatch
+optimal_box = FancyBboxPatch(
+    (460, 12.88), 80, 0.28,
+    boxstyle="round,pad=0.02,rounding_size=0.05",
+    facecolor='#2563eb', alpha=0.08,
+    edgecolor='#2563eb', linewidth=1.5, linestyle='--'
+)
+ax1.add_patch(optimal_box)
+ax1.text(500, 12.82, 'Best Trade-off', ha='center', fontsize=11,
+         color='#2563eb', fontweight='bold', style='italic')
 
-# Formatting
-ax1.set_xlabel('Model Size (MB)', fontsize=12, fontweight='bold')
-ax1.set_ylabel('Perplexity (lower is better)', fontsize=12, fontweight='bold')
-ax1.set_title('Model Size vs Perplexity Tradeoff\nQuantization Strategy Comparison',
-              fontsize=14, fontweight='bold', pad=20)
+# Axis labels with modern styling
+ax1.set_xlabel('Model Size (MB)', fontweight='semibold', color='#374151')
+ax1.set_ylabel('Perplexity (lower is better)', fontweight='semibold', color='#374151')
+fig1.suptitle('Model Size vs Perplexity Trade-off', fontweight='bold',
+              color='#111827', fontsize=16, y=0.98)
+ax1.set_title('Quantization Strategy Comparison on Qwen2-0.5B',
+              fontsize=12, color='#6b7280', pad=28)
 
-# Add grid
-ax1.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
+# Clean grid
+ax1.grid(True, alpha=0.4, linestyle='-', linewidth=0.6)
 ax1.set_axisbelow(True)
 
-# Add compression ratio as secondary x-axis
+# Spine styling
+for spine in ax1.spines.values():
+    spine.set_color('#d1d5db')
+    spine.set_linewidth(1)
+
+# Secondary x-axis for compression ratio
 ax1_top = ax1.twiny()
 compression_ticks = [1.0, 1.5, 2.0, 2.5, 3.0]
 ax1_top.set_xlim(ax1.get_xlim())
 ax1_top.set_xticks([948/c for c in compression_ticks])
-ax1_top.set_xticklabels([f'{c}x' for c in compression_ticks])
-ax1_top.set_xlabel('Compression Ratio', fontsize=10)
+ax1_top.set_xticklabels([f'{c}×' for c in compression_ticks])
+ax1_top.set_xlabel('Compression Ratio', fontsize=12, color='#6b7280', labelpad=10)
+ax1_top.tick_params(colors='#6b7280', pad=3)
+for spine in ax1_top.spines.values():
+    spine.set_color('#d1d5db')
 
-# Add legend for strategy types
+# Modern legend with better grouping
 legend_elements = [
-    mpatches.Patch(color='#2ecc71', label='Baseline (FP16)'),
-    mpatches.Patch(color='#3498db', label='Early Layers Q8'),
-    mpatches.Patch(color='#f39c12', label='Late Layers Q8'),
-    mpatches.Patch(color='#9b59b6', label='Middle/Alternating Q8'),
-    mpatches.Patch(color='#27ae60', label='Component-based Q8'),
-    mpatches.Patch(color='#e74c3c', label='Uniform Q4'),
+    mpatches.Patch(color='#10b981', label='Baseline (FP16)'),
+    mpatches.Patch(color='#2563eb', label='Early Layers Q8'),
+    mpatches.Patch(color='#f59e0b', label='Late Layers Q8'),
+    mpatches.Patch(color='#8b5cf6', label='Middle/Alternating Q8'),
+    mpatches.Patch(color='#4ade80', label='Component-based Q8'),
+    mpatches.Patch(color='#ef4444', label='Uniform Q4'),
 ]
-ax1.legend(handles=legend_elements, loc='upper right', fontsize=9)
+legend = ax1.legend(
+    handles=legend_elements,
+    loc='upper right',
+    frameon=True,
+    framealpha=0.95,
+    edgecolor='#e5e7eb',
+    fancybox=True,
+    shadow=False,
+    borderpad=0.8
+)
+legend.get_frame().set_linewidth(1)
+
+# Adjust axis limits to give room for labels
+ax1.set_xlim(250, 1000)
 
 plt.tight_layout()
-plt.savefig('results/model_size_perplexity_tradeoff.png', dpi=150, bbox_inches='tight',
+plt.savefig('results/model_size_perplexity_tradeoff.png', dpi=180, bbox_inches='tight',
             facecolor='white', edgecolor='none')
 plt.close()
 
